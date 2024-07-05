@@ -1,0 +1,138 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 15
+    },
+    "configurePresets": [
+        {
+            "name": "default",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/bin/build/${presetName}",
+            "installDir": "${sourceDir}/bin/install/${presetName}",
+            "vendor": {
+                "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+                    "sourceDir": "$env{HOME}/dev/vs/$ms{projectDirName}"
+                }
+            }
+        },
+        {
+            "name": "debug",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "environment": {
+                "DEBUG": "1"
+            }
+        },
+        {
+            "name": "release",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "environment": {
+                "NDEBUG": "1"
+            }
+        },
+
+        {
+            "inherits": [
+                "default"
+            ],
+            "name": "windows",
+            "hidden": true,
+            "generator": "Visual Studio 17 2022",
+            "environment": {
+                "WINDOWS": "1"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "inherits": [
+                "windows",
+                "debug"
+            ],
+            "name": "win32-debug",
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            },
+            "displayName": "x86 Debug"
+        },
+        {
+            "inherits": [
+                "windows",
+                "release"
+            ],
+            "name": "win32-release",
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            },
+            "displayName": "x86 Release"
+        },
+        {
+            "inherits": [
+                "windows",
+                "debug"
+            ],
+            "name": "win64-debug",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "displayName": "x64 Debug"
+        },
+        {
+            "inherits": [
+                "windows",
+                "release"
+            ],
+            "name": "win64-release",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "displayName": "x64 Release"
+        },
+
+        {
+            "inherits": [
+                "default"
+            ],
+            "name": "linux",
+            "hidden": true,
+            "generator": "Unix Makefiles",
+            "environment": {
+                "LINUX": "1"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "inherits": [
+                "linux",
+                "debug"
+            ],
+            "name": "linux-debug",
+            "displayName": "Debug"
+        },
+        {
+            "inherits": [
+                "linux",
+                "release"
+            ],
+            "name": "linux-release",
+            "displayName": "Release"
+        }
+    ]
+}
