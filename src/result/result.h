@@ -27,6 +27,7 @@ public:
     constexpr result(E&& error) : error(new E(error)), has_value(false) {};
     constexpr result(E& error) : error(new E(error)), has_value(false) {};
 
+    // ~result() {};
     ~result() { if (not has_value && error) delete error; };
 
     /* Explicit way to create result from its inner value type */
@@ -36,6 +37,8 @@ public:
     /* Explicit way to create result as error */
     static result<T> err(E&& e) { return result<T>(e); };
     static result<T> err(E& e) { return result<T>(e); };
+
+    bool is_error() { return has_value == false; };
 
     /**
      * @brief [UNSAFE] Unsafe way to extract value from result.
