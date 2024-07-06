@@ -62,7 +62,7 @@ struct Storage {
     void init(types::err<E> err) { new (&data) E(err.val); }
 
     template <typename U>
-    void rawConstruct(U&& val) {
+    void raw_init(U&& val) {
         typedef typename std::decay<U>::type CleanU;
 
         new (&data) CleanU(std::forward<U>(val));
@@ -95,7 +95,7 @@ struct Storage<void, E> {
     void init(types::err<E> err) { new (&data) E(err.val); }
 
     template <typename U>
-    void rawConstruct(U&& val) {
+    void raw_init(U&& val) {
         typedef typename std::decay<U>::type CleanU;
 
         new (&data) CleanU(std::forward<U>(val));
@@ -122,18 +122,18 @@ struct Storage<void, E> {
 template <typename T, typename E>
 struct Constructor {
     static void move(Storage<T, E>&& src, Storage<T, E>& dst, ok_tag) {
-        dst.rawConstruct(std::move(src.template get<T>()));
+        dst.raw_init(std::move(src.template get<T>()));
         src.destroy(ok_tag());
     }
 
-    static void copy(const Storage<T, E>& src, Storage<T, E>& dst, ok_tag) { dst.rawConstruct(src.template get<T>()); }
+    static void copy(const Storage<T, E>& src, Storage<T, E>& dst, ok_tag) { dst.raw_init(src.template get<T>()); }
 
     static void move(Storage<T, E>&& src, Storage<T, E>& dst, err_tag) {
-        dst.rawConstruct(std::move(src.template get<E>()));
+        dst.raw_init(std::move(src.template get<E>()));
         src.destroy(err_tag());
     }
 
-    static void copy(const Storage<T, E>& src, Storage<T, E>& dst, err_tag) { dst.rawConstruct(src.template get<E>()); }
+    static void copy(const Storage<T, E>& src, Storage<T, E>& dst, err_tag) { dst.raw_init(src.template get<E>()); }
 };
 
 }  // namespace hidden
