@@ -42,7 +42,32 @@ inline types::err<CleanE> err(E&& val) {
     return types::err<CleanE>(std::forward<E>(val));
 }
 
+template <typename T, typename E>
+struct result;
+
 namespace hidden {
+
+/* Result Ok type */
+template <typename R>
+struct ResultOkType {
+    typedef typename std::decay<R>::type type;
+};
+
+template <typename T, typename E>
+struct ResultOkType<result<T, E>> {
+    typedef T type;
+};
+
+/* Result Err type */
+template <typename R>
+struct ResultErrType {
+    typedef R type;
+};
+
+template <typename T, typename E>
+struct ResultErrType<result<T, E>> {
+    typedef typename std::remove_reference<E>::type type;
+};
 
 /* Type tags */
 struct ok_tag {};
@@ -136,6 +161,21 @@ struct Constructor {
     static void copy(const Storage<T, E>& src, Storage<T, E>& dst, err_tag) { dst.raw_init(src.template get<E>()); }
 };
 
+/* Constructor for Ok(void) and Err tagged storage */
+template <typename E>
+struct Constructor<void, E> {
+    static void move(Storage<void, E>&& src, Storage<void, E>& dst, ok_tag) {}
+
+    static void copy(const Storage<void, E>& src, Storage<void, E>& dst, ok_tag) {}
+
+    static void move(Storage<void, E>&& src, Storage<void, E>& dst, err_tag) {
+        dst.raw_init(std::move(src.template get<E>()));
+        src.destroy(err_tag());
+    }
+
+    static void copy(const Storage<void, E>& src, Storage<void, E>& dst, err_tag) { dst.raw_init(src.template get<E>()); }
+};
+
 }  // namespace hidden
 
 /**
@@ -178,6 +218,8 @@ struct result {
         storage.destroy(hidden::err_tag());
     }
 
+    const storage_type& get_storage() const { return storage; }
+
     /**
      * @return True if the result contains a value.
      */
@@ -209,6 +251,16 @@ struct result {
             std::terminate();
         }
         return expect_impl(std::is_same<T, void>());
+    }
+
+    /**
+     * @brief Extract value from result or a default value.
+     * (Will return the given default value in case of error)
+     */
+    template <typename U = T>
+    typename std::enable_if<!std::is_same<U, void>::value, U>::type unwrap_or(const U& def) const {
+        if (is_ok()) return storage.template get<U>();
+        return def;
     }
 
    private:
