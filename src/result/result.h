@@ -5,6 +5,8 @@
 #include <functional>
 #include <type_traits>
 
+namespace mxc {
+
 namespace types {
 
 template <typename T>
@@ -43,7 +45,7 @@ inline types::err<CleanE> err(E&& val) {
 }
 
 template <typename T, typename E>
-struct result;
+struct Result;
 
 namespace hidden {
 
@@ -54,7 +56,7 @@ struct ResultOkType {
 };
 
 template <typename T, typename E>
-struct ResultOkType<result<T, E>> {
+struct ResultOkType<Result<T, E>> {
     typedef T type;
 };
 
@@ -65,7 +67,7 @@ struct ResultErrType {
 };
 
 template <typename T, typename E>
-struct ResultErrType<result<T, E>> {
+struct ResultErrType<Result<T, E>> {
     typedef typename std::remove_reference<E>::type type;
 };
 
@@ -182,15 +184,15 @@ struct Constructor<void, E> {
  * @brief Rust inspired Result<T, E> type for propagating errors.
  */
 template <typename T, typename E>
-struct result {
+struct Result {
     static_assert(!std::is_same<E, void>::value, "void error type is not allowed");
 
     typedef hidden::Storage<T, E> storage_type;
 
-    result(types::ok<T> ok) : ok(true) { storage.init(std::move(ok)); }
-    result(types::err<E> err) : ok(false) { storage.init(std::move(err)); }
+    Result(types::ok<T> ok) : ok(true) { storage.init(std::move(ok)); }
+    Result(types::err<E> err) : ok(false) { storage.init(std::move(err)); }
 
-    result(result&& other) {
+    Result(Result&& other) {
         if (other.is_ok()) {
             hidden::Constructor<T, E>::move(std::move(other.storage), storage, hidden::ok_tag());
             ok = true;
@@ -200,7 +202,7 @@ struct result {
         ok = false;
     }
 
-    result(const result& other) {
+    Result(const Result& other) {
         if (other.is_ok()) {
             hidden::Constructor<T, E>::copy(other.storage, storage, hidden::ok_tag());
             ok = true;
@@ -210,15 +212,13 @@ struct result {
         ok = false;
     }
 
-    ~result() {
+    ~Result() {
         if (ok) {
             storage.destroy(hidden::ok_tag());
             return;
         }
         storage.destroy(hidden::err_tag());
     }
-
-    const storage_type& get_storage() const { return storage; }
 
     /**
      * @return True if the result contains a value.
@@ -227,30 +227,42 @@ struct result {
     /**
      * @return True if the result contains an error.
      */
-    inline bool is_err() const { return not ok; }
+    inline bool is_err() const { return !ok; }
 
     /**
      * @brief [UNSAFE] Unsafe way to extract value from result.
      * (Will terminate the program if the result is an error)
      */
-    T unwrap() const {
+    inline T unwrap() const {
         if (is_err()) {
             std::fprintf(stderr, "unwrap failed!\n");
             std::terminate();
         }
-        return expect_impl(std::is_same<T, void>());
+        return non_void_value(std::is_same<T, void>());
+    }
+
+    /**
+     * @brief [UNSAFE] Unsafe way to extract error from result.
+     * (Will terminate the program if the result is not an error)
+     */
+    inline const E& unwrap_err() const {
+        if (is_ok()) {
+            std::fprintf(stderr, "unwrap_err failed!\n");
+            std::terminate();
+        }
+        return storage.template get<E>();
     }
 
     /**
      * @brief [UNSAFE] Unsafe way to extract value from result.
      * (Will print message and terminate the program if the result is an error)
      */
-    T expect(const char* str) const {
+    inline T expect(const char* str) const {
         if (is_err()) {
             std::fprintf(stderr, "%s\n", str);
             std::terminate();
         }
-        return expect_impl(std::is_same<T, void>());
+        return non_void_value(std::is_same<T, void>());
     }
 
     /**
@@ -258,15 +270,33 @@ struct result {
      * (Will return the given default value in case of error)
      */
     template <typename U = T>
-    typename std::enable_if<!std::is_same<U, void>::value, U>::type unwrap_or(const U& def) const {
+    inline typename std::enable_if<!std::is_same<U, void>::value, U>::type unwrap_or(const U& def) const {
         if (is_ok()) return storage.template get<U>();
         return def;
     }
 
+    /**
+     * @brief Boolean operator.
+     * @return True if this result is ok. 
+     */
+    inline explicit operator bool() const { return is_ok(); }
+
+    /**
+     * @brief Dereference operator, short for result<T,E>::unwrap().
+     */
+    template <typename U = T>
+    inline typename std::enable_if<!std::is_same<U, void>::value, U>::type& operator*() {
+        if (is_ok()) return storage.template get<U>();
+        std::fprintf(stderr, "unwrap failed!\n");
+        std::terminate();
+    }
+
    private:
-    T expect_impl(std::true_type) const {}
-    T expect_impl(std::false_type) const { return storage.template get<T>(); }
+    T non_void_value(std::true_type) const {}
+    T non_void_value(std::false_type) const { return storage.template get<T>(); }
 
     bool ok = false;
     storage_type storage;
 };
+
+}

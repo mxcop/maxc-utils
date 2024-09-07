@@ -4,21 +4,30 @@
 
 #include "string/strfmt.h"
 
+namespace mxc {
+
+/**
+ * @brief Error origin trace info.
+ */
+struct ErrorTrace {
+    const size_t line_num = 0;
+    const char* file_name = nullptr;
+
+    ErrorTrace() = default;
+    ErrorTrace(const size_t line_num, const char* file_name) : line_num(line_num), file_name(file_name) {}
+};
+
 /**
  * @brief Project standard error datatype.
  */
-struct error {
+struct Error {
 	const char* info;
-	//std::string msg;
-	//std::string loc;
+    ErrorTrace trace;
 
-	error(const char* msg) : info(msg) {}
-
-	//error(std::string msg, const char* file, const char* func, const int line) {
-	//	std::string r = strfmt("%s [%s:%s(...):%i]", msg.data(), file, func, line);
-	//	info = (char*)malloc(r.length());
-	//	memcpy(info, r.data(), r.length());
-	//}
+	Error(const char* msg, ErrorTrace trace = {}) : info(msg), trace(trace) {}
 };
 
-//#define ERR(MSG) (error(MSG, __FILE__, __func__, __LINE__))
+/** Optional trace for errors. */
+#define TRACE mxc::ErrorTrace(__LINE__, __FILE__)
+
+}
