@@ -1,61 +1,51 @@
 #include <stdio.h>
+#include <chrono>
 
-#include "result/result.h"
-#include "result/error.h"
+#include "result/single-result.h"
 
-/**
- * @brief Result type with project custom error type.
- */
-template<class T>
-using Result = mxc::Result<T, mxc::Error>;
-using Error = mxc::Error;
-using mxc::err, mxc::ok;
+using namespace std::chrono;
+using namespace mxc;
 
-/**
- * @brief Safe division function.
- */
-Result<f32> safe_div(f32 a, f32 b) {
-    if (b == 0.0f) {
-        return err(Error("Divide by zero", TRACE));
+template <typename T>
+inline bool assert_result(const Result<T>& r) {
+    if (r.is_err()) printf("error: %s\n", r.unwrap_err().c_str());
+    return r.is_ok();
+};
+
+Result<int> test() { return Ok(12); }
+
+Result<int> test_void() {
+    return Ok(24);
+    // return Err("oh shit");
+}
+ 
+Result<void> safe_main() {
+    Result<int> rv = test();
+    if (rv.is_ok()) {
+        printf("rv: %d\n", rv.unwrap());
     }
 
-    return ok(a / b);
-}
+    const Result<int> r = test_void();
+    const int ri = chain_err(r);
+    printf("r: %d\n", ri);
 
-/**
- * @brief Result without a return value.
- */
-Result<void> something_stupid() {
-    return err(Error("Something stupid happened", TRACE));
-}
-
-Result<f32> try_multiple() { 
-    f32 r1 = safe_div(10, 5).unwrap();
-    f32 r2 = safe_div(20, 5).unwrap();
-    return safe_div(r1, r2);
+    return Ok();
 }
 
 int main() {
     printf("Hello, world!\n");
 
-    Result<void> r = something_stupid();
-    if (r.is_err()) {
-        const Error& e = r.unwrap_err();
-        if (e.trace.file_name != nullptr) {
-            printf("[error] (%s:%zi) %s\n", e.trace.file_name, e.trace.line_num, e.info);
-        } else {
-            printf("[error] %s\n", e.info);
-        }
-        return 0;
+    auto start = high_resolution_clock::now();
+
+    for (int i = 0; i < 10000; ++i) {
+        const Result<void> r = safe_main();
+        assert_result(r);
     }
 
-    try_multiple();
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
 
-    printf("16 / 4 = %f\n", safe_div(16, 4).expect("failed to divide"));
-    printf("20 / 0 = %f\n", safe_div(20, 0).unwrap_or(0.0f));
-
-
-    printf("Bye, world!\n");
+    printf("took %d ms (%f ms)\n", duration.count(), (double)duration.count() / 10000.0);
 
     return 0;
 }

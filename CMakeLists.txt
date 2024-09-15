@@ -3,6 +3,7 @@ project(maxc-utils)
 
 # C++ standard version
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "" FORCE)
+set(CMAKE_CXX_COMPILER "gcc")
 
 # Executable target
 add_executable(main)

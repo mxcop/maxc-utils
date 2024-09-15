@@ -55,84 +55,51 @@
         },
         {
             "inherits": [
-                "windows",
-                "debug"
+                "windows"
             ],
-            "name": "win32-debug",
-            "architecture": {
-                "value": "x86",
-                "strategy": "external"
-            },
-            "displayName": "x86 Debug"
-        },
-        {
-            "inherits": [
-                "windows",
-                "release"
-            ],
-            "name": "win32-release",
-            "architecture": {
-                "value": "x86",
-                "strategy": "external"
-            },
-            "displayName": "x86 Release"
-        },
-        {
-            "inherits": [
-                "windows",
-                "debug"
-            ],
-            "name": "win64-debug",
+            "name": "win64",
             "architecture": {
                 "value": "x64",
                 "strategy": "external"
             },
-            "displayName": "x64 Debug"
+            "displayName": "Windows x64"
         },
         {
             "inherits": [
-                "windows",
-                "release"
+                "windows"
             ],
+            "name": "win86",
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            },
+            "displayName": "Windows x86"
+        }
+    ],
+    "buildPresets": [
+        {
             "name": "win64-release",
-            "architecture": {
-                "value": "x64",
-                "strategy": "external"
-            },
-            "displayName": "x64 Release"
-        },
-
-        {
-            "inherits": [
-                "default"
-            ],
-            "name": "linux",
-            "hidden": true,
-            "generator": "Unix Makefiles",
-            "environment": {
-                "LINUX": "1"
-            },
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Linux"
-            }
+            "displayName": "Release",
+            "configurePreset": "win64",
+            "configuration": "Release"
         },
         {
-            "inherits": [
-                "linux",
-                "debug"
-            ],
-            "name": "linux-debug",
-            "displayName": "Debug"
+            "name": "win64-debug",
+            "displayName": "Debug",
+            "configurePreset": "win64",
+            "configuration": "Debug"
         },
         {
-            "inherits": [
-                "linux",
-                "release"
-            ],
-            "name": "linux-release",
-            "displayName": "Release"
+            "name": "win86-release",
+            "displayName": "Release",
+            "configurePreset": "win86",
+            "configuration": "Release"
+        },
+        {
+            "name": "win86-debug",
+            "displayName": "Debug",
+            "configurePreset": "win86",
+            "configuration": "Debug"
         }
     ]
 }
